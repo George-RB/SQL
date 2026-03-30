@@ -42,3 +42,5 @@ ORDER BY name desc
 select min(salary) as min_salary, max(salary) as max_salary, avg(salary) as avg_salary from employees
 
 --Показать всех сотрудников, у которых дата найма (hire_date) не указана (NULL).
+select name from employees
+where hire_date is null
