@@ -55,40 +55,49 @@ SELECT count(name) AS count_dwarves,
     avg(happiness) AS avg_happ,
     max(happiness) AS max_happ,
     min(happiness) AS min_happ
-FROM dwarves
+FROM dwarves;
+
 SELECT count(*),
     profession AS prof
 FROM dwarves
-GROUP BY profession
+GROUP BY profession;
+
 SELECT avg(happiness) AS avg_happ,
     profession
 FROM dwarves
-GROUP BY profession
+GROUP BY profession;
+
 SELECT count(name) AS count,
     profession,
     avg(happiness) AS avg_happ,
     max(happiness) AS max_happ,
     min(happiness) AS min_happ
 FROM dwarves
-GROUP BY profession
+GROUP BY profession;
+
 SELECT count(*) AS compl,
     dwarf_id
 FROM tasks
 WHERE completed = TRUE
-GROUP BY dwarf_id
+GROUP BY dwarf_id;
+
 SELECT profession
 FROM dwarves
 GROUP BY profession
-HAVING count(*) > 2
+HAVING count(*) > 2;
+
 SELECT profession,
     avg(happiness) AS avg_happ
 FROM dwarves
 GROUP BY profession
-HAVING avg(happiness) < 50
+HAVING avg(happiness) < 50;
+
 SELECT profession,
     GROUP_CONCAT (name)
 FROM dwarves
-GROUP BY profession -- Гномы (уже есть)
+GROUP BY profession;
+
+-- Гномы (уже есть)
 SELECT *
 FROM dwarves;
 
@@ -98,34 +107,44 @@ FROM tasks;
 
 -- артефакт без владельца
 SELECT *
-FROM dwarves
+FROM dwarves;
+
 SELECT *
-FROM tasks
+FROM tasks;
+
 SELECT *
-FROM artifacts
+FROM artifacts;
+
 SELECT DISTINCT dwarves.name,
     tasks.task_type
 FROM dwarves
-    INNER JOIN tasks ON dwarves.id = tasks.dwarf_id
+    INNER JOIN tasks ON dwarves.id = tasks.dwarf_id;
+
 SELECT DISTINCT dwarves.name,
     tasks.task_type
 FROM dwarves
-    LEFT JOIN tasks ON dwarves.id = tasks.dwarf_id
+    LEFT JOIN tasks ON dwarves.id = tasks.dwarf_id;
+
 SELECT dwarves.name,
     tasks.completed
 FROM dwarves
     LEFT JOIN tasks ON dwarves.id = tasks.dwarf_id
-    AND completed = 1 -- Если не использовать and completed = 1 то пропадут все дварфы у которых нет заданий
+    AND completed = 1;
+
+-- Если не использовать and completed = 1 то пропадут все дварфы у которых нет заданий
 SELECT dwarves.name,
     count(tasks.task_type) AS count_task
 FROM dwarves
     LEFT JOIN tasks ON dwarves.id = tasks.dwarf_id
 GROUP BY name
-HAVING count_task > 1 -- в последней строке сделали фильтр типа если больше одного задания то вывести
+HAVING count_task > 1;
+
+-- в последней строке сделали фильтр типа если больше одного задания то вывести
 SELECT artifacts.name,
     COALESCE(dwarves.name, 'No owner')
 FROM artifacts
-    LEFT JOIN dwarves ON dwarves.id = artifacts.dwarf_id
+    LEFT JOIN dwarves ON dwarves.id = artifacts.dwarf_id;
+
 SELECT DISTINCT tasks.task_type,
     artifacts.name,
     dwarves.name
@@ -153,26 +172,32 @@ FROM dwarves d1
     LEFT JOIN dwarves d2 ON d1.manager_id = d2.id;
 
 SELECT *
-FROM dwarves
+FROM dwarves;
+
 SELECT *
-FROM tasks
+FROM tasks;
+
 SELECT *
-FROM artifacts
+FROM artifacts;
+
 SELECT *
-FROM fortresses
+FROM fortresses;
+
 SELECT *
 FROM dwarves
 WHERE id IN (
         SELECT dwarf_id
         FROM tasks
-    )
+    );
+
 SELECT *
 FROM dwarves d
 WHERE EXISTS (
         SELECT 1
         FROM tasks t
         WHERE t.dwarf_id = d.id
-    )
+    );
+
 SELECT name,
     happiness
 FROM dwarves d
@@ -185,7 +210,8 @@ WHERE happiness > (
             COUNT(*) AS artif_count
         FROM artifacts
         GROUP BY dwarf_id
-    )
+    );
+
 SELECT d.name,
     art.artif_count
 FROM dwarves d
@@ -348,3 +374,205 @@ SELECT name,
         ORDER BY happiness
     ) as group_num
 FROM dwarves;
+
+select *
+FROM fortresses;
+
+---Вывести всех гномов и название их крепости (если крепости нет — NULL)
+SELECT dwarves.name,
+    fortresses.name
+from dwarves
+    left join fortresses on dwarves.fortress_id = fortresses.id;
+
+---Вывести только тех гномов, у которых есть хотя бы один артефакт
+SELECT DISTINCT dwarves.name,
+    artifacts.name
+FROM dwarves
+    join artifacts on dwarves.id = artifacts.dwarf_id;
+
+---Вывести все артефакты и имена их владельцев (если владельца нет — NULL)
+SELECT dwarves.name,
+    artifacts.name
+FROM artifacts
+    left join dwarves on artifacts.dwarf_id = dwarves.id;
+
+--- Подсчитать количество артефактов у каждого гнома. Если нет артефактов — вывести 0.
+SELECT dwarves.name,
+    count(artifacts.id)
+FROM dwarves
+    left join artifacts on artifacts.dwarf_id = dwarves.id
+GROUP BY dwarves.id;
+
+--Вывести название крепости и среднее счастье гномов в ней. Только для крепостей, где есть гномы.
+SELECT fortresses.name,
+    avg(dwarves.happiness)
+from dwarves
+    join fortresses on dwarves.fortress_id = fortresses.id
+GROUP BY fortresses.name;
+
+---Вывести название крепости и среднее счастье гномов в ней. Включить крепости без гномов (NULL вместо среднего).
+SELECT fortresses.name,
+    avg(dwarves.happiness)
+from fortresses
+    left join dwarves on fortresses.id = dwarves.fortress_id
+GROUP BY fortresses.name;
+
+---Вывести гномов, у которых суммарная стоимость артефактов больше 5000.
+SELECT dwarves.name,
+    sum(artifacts.value) as sum_art
+from dwarves
+    left join artifacts on dwarves.id = artifacts.dwarf_id
+GROUP BY dwarves.id
+HAVING sum(artifacts.VALUE) > 5000;
+
+---Вывести пары гномов, которые живут в одной крепости. Не выводить (гном, гном) и (А,Б) и (Б,А) как дубли.
+SELECT a.name,
+    b.name
+from dwarves a
+    join dwarves b ON a.fortress_id = b.fortress_id
+    and a.id > b.id;
+
+---Вывести всех гномов и все артефакты. Если у гнома нет артефакта — NULL, если артефакт без гнома — NULL.
+SELECT dwarves.name,
+    artifacts.name
+FROM dwarves
+    left JOIN artifacts on dwarves.id = artifacts.dwarf_id
+UNION
+SELECT dwarves.name,
+    artifacts.name
+FROM dwarves
+    RIGHT JOIN artifacts on dwarves.id = artifacts.dwarf_id
+WHERE dwarves.id is null;
+
+---Вывести крепости, в которых среднее счастье гномов-шахтёров (profession = 'miner') ниже среднего счастья всех гномов в этой крепости.
+SELECT f.name
+FROM fortresses f
+    JOIN dwarves d ON f.id = d.fortress_id
+GROUP BY f.id,
+    f.name
+HAVING AVG(
+        CASE
+            WHEN d.profession = 'miner' THEN d.happiness
+        END
+    ) < AVG(d.happiness);
+
+SELECT name,
+    happiness,
+    RANK() OVER (
+        ORDER BY happiness
+    ) AS rank_num,
+    DENSE_RANK() OVER (
+        ORDER BY happiness
+    ) AS dense_rank_num
+FROM dwarves;
+
+SELECT name,
+    happiness,
+    lead(happiness) over (
+        ORDER BY happiness
+    )
+FROM dwarves;
+
+SELECT name,
+    profession,
+    happiness,
+    last_value(happiness) over(
+        PARTITION by profession
+        ORDER BY happiness ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) as last_happ
+FROM dwarves;
+
+select *
+FROM fortresses;
+
+select *
+FROM dwarves;
+
+select *
+FROM artifacts;
+
+SELECT dwarves.name,
+    artifacts.name
+FROM dwarves
+    right JOIN artifacts ON dwarves.id = artifacts.dwarf_id;
+
+--- Напишите запрос, который соединит каждого гнома с каждой крепостью.
+SELECT dwarves.name,
+    fortresses.name
+FROM dwarves,
+    fortresses;
+
+---Напишите запрос, который соединяет dwarves и fortresses по fortress_id.
+--- Все работает, но здесь не работает, наверное версия старая или фиг знает
+SELECT *
+FROM fortresses
+    JOIN dwarves USING (fortress_id);
+
+---Напишите запрос, который найдет все пары гномов из одной крепости.
+SELECT d1.name,
+    d2.name
+FROM dwarves d1
+    JOIN dwarves d2 ON d2.fortress_id = d1.fortress_id
+WHERE d1.id < d2.id;
+
+SELECT dwarves.name,
+    dwarves.manager_id
+FROM dwarves d1
+    left JOIN dwarves d2 on d1.id = d2.id
+WHERE d2.manager_id is null;
+
+--- Вывести всех гномов и название их крепости.
+SELECT d.name,
+    (
+        select name
+        from fortresses f
+        where f.id = d.fortress_id
+    ) as fortress_name
+from dwarves d;
+
+SELECT d.name,
+    d.profession,
+    (
+        d.happiness - (
+            select avg(happiness) as avg_happiness
+            from dwarves d2
+            WHERE d2.fortress_id = d.fortress_id
+        )
+    )
+from dwarves d;
+
+SELECT name
+from dwarves
+WHERE not exists (
+        SELECT dwarf_id
+        from artifacts
+        where dwarf_id = dwarves.id
+    );
+
+SELECT d.name,
+    (
+        SELECT AVG(happiness)
+        FROM dwarves d2
+        WHERE d2.fortress_id = d.fortress_id
+    ) AS fortress_avg
+FROM dwarves d
+WHERE happiness > (
+        SELECT AVG(happiness)
+        FROM dwarves
+    );
+
+WITH temp AS (
+    SELECT d.name,
+        (
+            SELECT AVG(happiness)
+            FROM dwarves d2
+            WHERE d2.fortress_id = d.fortress_id
+        ) AS fortress_avg
+    FROM dwarves d
+    WHERE happiness > (
+            SELECT AVG(happiness)
+            FROM dwarves
+        )
+)
+SELECT *
+FROM temp
